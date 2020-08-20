@@ -39,7 +39,7 @@ async fn total_rows() -> Result<u128, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
 
     let response = client
-        .get("http://localhost:5984/sudoku/_design/puzzles/_view/completed?limit=1")
+        .get("http://10.0.1.108:5984/sudoku/_design/puzzles/_view/completed?limit=1")
         .basic_auth("admin", Option::from("Bardop0nd"))
         .send()
         .await?
@@ -57,7 +57,7 @@ async fn get_solution(
     let pick_str = pick.to_string();
     let q = vec![("limit", "1"), ("skip", pick_str.as_str())];
     let map = client
-        .get("http://localhost:5984/sudoku/_design/puzzles/_view/completed")
+        .get("http://10.0.1.108:5984/sudoku/_design/puzzles/_view/completed")
         .basic_auth("admin", Option::from("Bardop0nd"))
         .query(q.as_slice())
         .send()
