@@ -38,8 +38,14 @@ fn make_puzzle(grid: &Vec<u8>, clue_count: u8, map_id: String) -> types::Puzzle 
 async fn total_rows() -> Result<u128, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
 
+    let url = format!(
+        "http://{host}:{port}/sudoku/_design/puzzles/_view/completed?limit=1",
+        host = db_host(),
+        port = db_port()
+    );
+
     let response = client
-        .get("http://localhost:5984/sudoku/_design/puzzles/_view/completed?limit=1")
+        .get(&url)
         .basic_auth("admin", Option::from("Bardop0nd"))
         .send()
         .await?
@@ -56,9 +62,15 @@ async fn get_solution(
 ) -> Result<QueryResult, Box<dyn std::error::Error>> {
     let pick_str = pick.to_string();
     let q = vec![("limit", "1"), ("skip", pick_str.as_str())];
+
+    let url = format!(
+        "http://{host}:{port}/sudoku/_design/puzzles/_view/completed",
+        host = db_host(),
+        port = db_port()
+    );
     let map = client
-        .get("http://localhost:5984/sudoku/_design/puzzles/_view/completed")
-        .basic_auth("admin", Option::from("Bardop0nd"))
+        .get(&url)
+        .basic_auth(db_admin(), Option::from(&db_pw()))
         .query(q.as_slice())
         .send()
         .await?
@@ -66,6 +78,22 @@ async fn get_solution(
         .await?;
 
     Ok(map)
+}
+
+fn db_host() -> String {
+    env::var("DB_HOST").unwrap_or("10.0.1.108".to_string())
+}
+
+fn db_port() -> String {
+    env::var("DB_PORT").unwrap_or("5984".to_string())
+}
+
+fn db_admin() -> String {
+    env::var("DB_ADMIN_USER").unwrap_or("admin".to_string())
+}
+
+fn db_pw() -> String {
+    env::var("DB_ADMIN_PW").unwrap_or("Bardop0nd".to_string())
 }
 
 #[tokio::main]
