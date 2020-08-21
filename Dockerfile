@@ -5,7 +5,6 @@ WORKDIR /puzzle_maker
 COPY Cargo.toml Cargo.lock ./
 RUN cargo build --release
 
-RUN rm -rf ./src
 COPY src ./src
 RUN cargo build --release
 
