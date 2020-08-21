@@ -40,8 +40,8 @@ async fn total_rows() -> Result<u128, Box<dyn std::error::Error>> {
 
     let url = format!(
         "http://{host}:{port}/sudoku/_design/puzzles/_view/completed?limit=1",
-        host = get_db_host(),
-        port = get_db_port()
+        host = db_host(),
+        port = db_port()
     );
 
     let response = client
@@ -65,12 +65,12 @@ async fn get_solution(
 
     let url = format!(
         "http://{host}:{port}/sudoku/_design/puzzles/_view/completed",
-        host = get_db_host(),
-        port = get_db_port()
+        host = db_host(),
+        port = db_port()
     );
     let map = client
         .get(&url)
-        .basic_auth("admin", Option::from("Bardop0nd"))
+        .basic_auth(db_admin(), Option::from(&db_pw()))
         .query(q.as_slice())
         .send()
         .await?
@@ -80,11 +80,20 @@ async fn get_solution(
     Ok(map)
 }
 
-fn get_db_host() -> String {
+fn db_host() -> String {
     env::var("DB_HOST").unwrap_or("10.0.1.108".to_string())
 }
-fn get_db_port() -> String {
+
+fn db_port() -> String {
     env::var("DB_PORT").unwrap_or("5984".to_string())
+}
+
+fn db_admin() -> String {
+    env::var("DB_ADMIN_USER").unwrap_or("admin".to_string())
+}
+
+fn db_pw() -> String {
+    env::var("DB_ADMIN_PW").unwrap_or("Bardop0nd".to_string())
 }
 
 #[tokio::main]
