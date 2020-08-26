@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::env;
+use std::{env, thread, time};
 use sudoku_generator::utils;
 
 mod types;
@@ -46,7 +46,7 @@ async fn total_rows() -> Result<u128, Box<dyn std::error::Error>> {
 
     let response = client
         .get(&url)
-        .basic_auth("admin", Option::from("Bardop0nd"))
+        .basic_auth("admin", Option::from(db_pw()))
         .send()
         .await?
         .json::<QueryResult>()
@@ -101,23 +101,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        println!("usage: spd <num_clues>");
+        println!("usage: {} <num_clues> -d", args[0]);
         return Ok(());
     }
+
+    // TODO: fast hack for now. this should be a param or be read in from env
+    let is_daemon: bool = args.len() == 3;
 
     let n = args[1].parse::<u8>().unwrap();
 
     let client = reqwest::Client::new();
-    let total_rows = total_rows().await?;
+    loop {
+        let total_rows = total_rows().await?;
 
-    let range = (0..total_rows).collect::<Vec<u128>>();
-    let pick = utils::pick(range.as_slice()).unwrap();
+        let range = (0..total_rows).collect::<Vec<u128>>();
+        let pick = utils::pick(range.as_slice()).unwrap();
 
-    let grid = get_solution(&client, pick - 1).await?;
+        let grid = get_solution(&client, pick - 1).await?;
 
-    let r = grid.rows[0].clone();
-    let puzzle = make_puzzle(&r.value, n, r.id);
-    puzzle.dump_console();
+        let r = grid.rows[0].clone();
+        let puzzle = make_puzzle(&r.value, n, r.id);
+        puzzle.dump_console();
+
+        if is_daemon == false {
+            break;
+        }
+        //TODO: this should be retrieved from the environment
+        thread::sleep(time::Duration::from_secs(5));
+    }
 
     Ok(())
 }
